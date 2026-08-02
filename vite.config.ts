@@ -12,4 +12,23 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "supabase",
+              test: /node_modules\/@supabase\//,
+            },
+            {
+              name: "react-vendor",
+              test: /node_modules\/react\/|node_modules\/react-dom\/|node_modules\/@tanstack\//,
+            },
+          ],
+        },
+      },
+    },
+  },
 });
