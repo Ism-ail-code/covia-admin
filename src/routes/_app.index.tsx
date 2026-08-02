@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, CarFront, Users, Wallet, Waves } from "lucide-react";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowUpRight, CarFront, Users, Wallet } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/page";
-import { api } from "@/lib/api";
+import { adminGetAnalytics, adminListAppeals, adminListVerifications, adminSearchUsers } from "@/lib/adminApi";
+import { subscribeToRides } from "@/lib/realtime";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/")({
@@ -61,16 +63,42 @@ function StatCard({
 }
 
 function DashboardPage() {
-  const usersQuery = useQuery({ queryKey: ["users"], queryFn: api.getUsers });
-  const weeklyQuery = useQuery({ queryKey: ["weekly"], queryFn: api.getWeeklyRides });
-  const verificationsQuery = useQuery({ queryKey: ["verifications"], queryFn: api.getVerifications });
-  const reportsQuery = useQuery({ queryKey: ["reports"], queryFn: api.getReports });
+  const queryClient = useQueryClient();
+  const analyticsQuery = useQuery({ queryKey: ["analytics"], queryFn: adminGetAnalytics });
+  const verificationsQuery = useQuery({
+    queryKey: ["verifications", "pending"],
+    queryFn: () => adminListVerifications({ status: "pending" }),
+    refetchInterval: 60_000,
+  });
+  const appealsQuery = useQuery({
+    queryKey: ["appeals", "open"],
+    queryFn: () => adminListAppeals({ status: "open" }),
+    refetchInterval: 60_000,
+  });
+  const recentUsersQuery = useQuery({
+    queryKey: ["users", "recent"],
+    queryFn: () => adminSearchUsers({ page: 1, pageSize: 5 }),
+    refetchInterval: 60_000,
+  });
 
-  const week = weeklyQuery.data ?? [];
-  const peak = Math.max(...week.map((d) => d.rides), 1);
+  useEffect(() => {
+    const unsubscribe = subscribeToRides(() => {
+      queryClient.invalidateQueries({ queryKey: ["analytics"] });
+    });
+    return unsubscribe;
+  }, [queryClient]);
 
-  const railPending = verificationsQuery.data?.filter((v) => v.status === "pending").length ?? 0;
-  const openReports = reportsQuery.data?.filter((r) => r.status === "open").length ?? 0;
+  const analytics = analyticsQuery.data;
+
+  const registrations = analytics?.users.daily_registrations ?? [];
+  const peak = Math.max(...registrations.map((d) => d.registrations), 1);
+
+  const completed = analytics?.rides.overview.completed_rides ?? 0;
+  const cancelled = analytics?.rides.overview.cancelled_rides ?? 0;
+  const cancellationRate = completed + cancelled > 0 ? ((cancelled / (completed + cancelled)) * 100).toFixed(1) : "0.0";
+
+  const pendingVerifications = verificationsQuery.data?.length ?? 0;
+  const openAppeals = appealsQuery.data?.items?.length ?? 0;
 
   return (
     <div>
@@ -85,28 +113,54 @@ function DashboardPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total riders" value="26,900" delta="18.2% vs last wk" trend="up" icon={Users} />
-        <StatCard label="Live rides" value="4" delta="Peak at 18:00" trend="up" icon={CarFront} />
-        <StatCard label="Weekly GTV" value="PKR 42.7M" delta="+9.4% vs last wk" trend="up" icon={Wallet} />
-        <StatCard label="Cancellation rate" value="3.1%" delta="-0.4 pts" trend="down" icon={Waves} />
+        <StatCard
+          label="Total riders"
+          value={analytics ? analytics.users.overview.total_users.toLocaleString() : "…"}
+          delta={`${analytics?.users.overview.new_users_7d ?? 0} new (7d)`}
+          trend="up"
+          icon={Users}
+        />
+        <StatCard
+          label="Live rides"
+          value={analytics ? String(analytics.rides.overview.in_progress_rides) : "…"}
+          delta={`${analytics?.rides.overview.rides_7d ?? 0} rides (7d)`}
+          trend="up"
+          icon={CarFront}
+        />
+        <StatCard
+          label="Completed rides"
+          value={analytics ? completed.toLocaleString() : "…"}
+          delta={`available ${analytics?.rides.overview.published_rides ?? 0}`}
+          trend="up"
+          icon={Wallet}
+        />
+        <StatCard
+          label="Cancellation rate"
+          value={analytics ? `${cancellationRate}%` : "…"}
+          delta={`${cancelled} cancelled`}
+          trend="down"
+          icon={CarFront}
+        />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle className="text-base">Rides this week</CardTitle>
-            <p className="text-sm text-muted-foreground">Completed trips across all cities</p>
+            <CardTitle className="text-base">New registrations</CardTitle>
+            <p className="text-sm text-muted-foreground">Daily sign-ups across the platform</p>
           </CardHeader>
           <CardContent>
-            {weeklyQuery.isLoading ? (
+            {analyticsQuery.isLoading ? (
               <Skeleton className="h-40 w-full" />
+            ) : registrations.length === 0 ? (
+              <p className="grid h-40 place-items-center text-sm text-muted-foreground">No registration data yet.</p>
             ) : (
               <div className="flex h-40 items-end gap-2">
-                {week.map((d) => (
+                {registrations.map((d) => (
                   <div key={d.day} className="flex flex-1 flex-col items-center gap-1.5">
                     <div
                       className="w-full rounded-t-md bg-primary/80 transition-all hover:bg-primary"
-                      style={{ height: `${Math.max(8, (d.rides / peak) * 140)}px` }}
+                      style={{ height: `${Math.max(8, (d.registrations / peak) * 140)}px` }}
                     />
                     <span className="text-[11px] text-muted-foreground">{d.day}</span>
                   </div>
@@ -121,10 +175,14 @@ function DashboardPage() {
             <CardTitle className="text-base">Pending attention</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2.5">
-            <AttentionItem label="Verifications awaiting review" value={`${railPending} pending`} to="/verifications" />
-            <AttentionItem label="Open safety reports" value={`${openReports} open`} to="/reports" />
-            <AttentionItem label="Appeals in queue" value="1 open" to="/appeals" />
-            <AttentionItem label="Standby candidates active" value="4 active" to="/standby" />
+            <AttentionItem label="Verifications awaiting review" value={`${pendingVerifications} pending`} to="/verifications" />
+            <AttentionItem
+              label="Open safety reports"
+              value={`${analytics?.safety.reports_pending ?? 0} open`}
+              to="/reports"
+            />
+            <AttentionItem label="Appeals in queue" value={`${openAppeals} open`} to="/appeals" />
+            <AttentionItem label="Standby candidates active" value="—" to="/standby" />
           </CardContent>
         </Card>
       </div>
@@ -138,24 +196,32 @@ function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-2">
-            {(usersQuery.data ?? []).slice(0, 5).map((u) => (
-              <div key={u.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
-                <Avatar className="size-8">
-                  <AvatarFallback>{initials(u.name)}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{u.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {u.role} · {u.city}
-                  </p>
-                </div>
-                <Badge
-                  variant={u.status === "active" ? "success" : u.status === "pending" ? "warning" : "secondary"}
-                >
-                  {u.status}
-                </Badge>
+            {recentUsersQuery.isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-11 w-full" />
+                ))}
               </div>
-            ))}
+            ) : recentUsersQuery.data?.items.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No users found.</p>
+            ) : (
+              recentUsersQuery.data?.items.map((u) => (
+                <div key={u.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
+                  <Avatar className="size-8">
+                    <AvatarFallback>{initials(u.display_name ?? u.email)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{u.display_name ?? u.username ?? u.email}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {u.verification_status} · {new Date(u.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Badge variant={u.is_banned ? "destructive" : u.is_suspended ? "warning" : "success"}>
+                    {u.is_banned ? "banned" : u.is_suspended ? "suspended" : "active"}
+                  </Badge>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
