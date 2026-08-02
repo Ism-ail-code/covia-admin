@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DEMO_CREDENTIALS, isAuthenticated, signIn } from "@/lib/auth";
+import { ensureSession, isAuthenticated, signIn } from "@/lib/auth";
 
 export const Route = createFileRoute("/login")({
-  beforeLoad: () => {
+  beforeLoad: async () => {
+    await ensureSession();
     if (isAuthenticated()) {
       throw redirect({ to: "/" });
     }
@@ -19,8 +20,8 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState(DEMO_CREDENTIALS.email);
-  const [password, setPassword] = useState(DEMO_CREDENTIALS.password);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,7 +54,7 @@ function LoginPage() {
           <form onSubmit={handleSubmit}>
             <CardHeader>
               <CardTitle>Sign in</CardTitle>
-              <CardDescription>Use the demo credentials below to explore the dashboard.</CardDescription>
+              <CardDescription>Use your Covia administrator account to continue.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -62,6 +63,7 @@ function LoginPage() {
                   id="email"
                   type="email"
                   autoComplete="email"
+                  placeholder="admin@covia.pk"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -73,16 +75,11 @@ function LoginPage() {
                   id="password"
                   type="password"
                   autoComplete="current-password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-              </div>
-              <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                Demo&ensp;
-                <code className="font-medium text-foreground">{DEMO_CREDENTIALS.email}</code>
-                &ensp;/&ensp;
-                <code className="font-medium text-foreground">{DEMO_CREDENTIALS.password}</code>
               </div>
             </CardContent>
             <CardFooter>

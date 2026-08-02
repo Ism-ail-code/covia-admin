@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { router } from "./router";
+import { ensureSession } from "@/lib/auth";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -15,6 +16,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+void ensureSession();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

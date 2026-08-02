@@ -78,8 +78,8 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
   const user = useAuth();
   const navigate = useNavigate();
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await signOut();
     navigate({ to: "/login" as never });
   };
 

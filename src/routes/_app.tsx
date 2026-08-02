@@ -1,9 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AppLayout } from "@/components/layout/app-shell";
-import { isAuthenticated } from "@/lib/auth";
+import { ensureSession, isAuthenticated } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app")({
-  beforeLoad: () => {
+  beforeLoad: async () => {
+    await ensureSession();
     if (!isAuthenticated()) {
       throw redirect({ to: "/login" });
     }
