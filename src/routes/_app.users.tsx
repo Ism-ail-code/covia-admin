@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/page";
-import { api } from "@/lib/api";
+import { adminSearchUsers } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/users")({
   component: UsersPage,
@@ -30,17 +30,16 @@ function initials(name: string) {
 }
 
 const statusVariant = {
-  active: "success",
+  activated: "success",
   pending: "warning",
   suspended: "destructive",
   banned: "destructive",
-  invited: "secondary",
 } as const;
 
-const roleLabel = { rider: "Rider", driver: "Driver", admin: "Admin", super_admin: "Super admin" } as const;
-
 function UsersPage() {
-  const usersQuery = useQuery({ queryKey: ["users"], queryFn: api.getUsers });
+  const usersQuery = useQuery({ queryKey: ["users", "all"], queryFn: () => adminSearchUsers({ page: 1, pageSize: 50 }) });
+
+  const rows = usersQuery.data?.items ?? [];
 
   return (
     <div>
@@ -49,11 +48,11 @@ function UsersPage() {
         description="Riders, drivers and admins across all markets."
         actions={
           <>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled>
               <Download className="size-4" />
               Export
             </Button>
-            <Button size="sm">
+            <Button size="sm" disabled>
               <UserPlus className="size-4" />
               Invite user
             </Button>
@@ -64,9 +63,7 @@ function UsersPage() {
       <Tabs defaultValue="all">
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="riders">Riders</TabsTrigger>
-          <TabsTrigger value="drivers">Drivers</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="pending">Pending verification</TabsTrigger>
           <TabsTrigger value="restricted">Suspended / Banned</TabsTrigger>
         </TabsList>
       </Tabs>
@@ -76,46 +73,65 @@ function UsersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>City</TableHead>
+              <TableHead>Verification</TableHead>
+              <TableHead>Reliability</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Trips</TableHead>
-              <TableHead>Last active</TableHead>
+              <TableHead>Rides</TableHead>
+              <TableHead>Joined</TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {usersQuery.data?.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="size-8">
-                      <AvatarFallback>{initials(u.name)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium">{u.name}</p>
-                      <p className="text-xs text-muted-foreground">{u.phone}</p>
+            {rows.map((u) => {
+              const status = u.is_banned ? "banned" : u.is_suspended ? "suspended" : "activated";
+              return (
+                <TableRow key={u.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-8">
+                        <AvatarFallback>{initials(u.display_name ?? u.email)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">{u.display_name ?? u.username ?? u.email}</p>
+                        <p className="text-xs text-muted-foreground">{u.email}</p>
+                      </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{roleLabel[u.role]}</Badge>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{u.city}</TableCell>
-                <TableCell>
-                  <Badge variant={statusVariant[u.status]}>{u.status}</Badge>
-                </TableCell>
-                <TableCell className="tabular-nums">{u.trips.toLocaleString()}</TableCell>
-                <TableCell className="text-muted-foreground">{u.lastActive}</TableCell>
-                <TableCell className="text-right">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to="/users/$userId" params={{ userId: u.id }}>
-                      View
-                    </Link>
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        u.verification_status === "Verified"
+                          ? "success"
+                          : u.verification_status === "Rejected"
+                            ? "destructive"
+                            : u.verification_status === "In Review"
+                              ? "warning"
+                              : "secondary"
+                      }
+                    >
+                      {u.verification_status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="tabular-nums">{u.reliability_score.toFixed(1)}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusVariant[status]}>{status}</Badge>
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {u.total_completed_rides.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {new Date(u.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild variant="ghost" size="sm">
+                      <Link to="/users/$userId" params={{ userId: u.id }}>
+                        View
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
