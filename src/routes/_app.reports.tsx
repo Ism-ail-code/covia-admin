@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/page";
 import { api } from "@/lib/api";
+import { actions } from "@/lib/actions";
 import type { Report, ReportSeverity } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/reports")({
@@ -25,7 +28,18 @@ const statusVariant: Record<Report["status"], "destructive" | "warning" | "succe
 };
 
 function ReportsPage() {
+  const queryClient = useQueryClient();
   const reportsQuery = useQuery({ queryKey: ["reports"], queryFn: api.getReports });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "in_review" | "resolved" }) =>
+      actions.setReportStatus(id, status),
+    onSuccess: (_, { status }) => {
+      toast.success(status === "resolved" ? "Report resolved" : "Report moved to review");
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+    onError: () => toast.error("Could not update report"),
+  });
 
   return (
     <div>
@@ -48,11 +62,24 @@ function ReportsPage() {
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
-                <Button variant="outline" size="sm">
-                  Assign
-                </Button>
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={updateMutation.isPending}
+                  onClick={() => updateMutation.mutate({ id: r.id, status: "in_review" })}
+                >
                   Review
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={updateMutation.isPending}
+                  onClick={() => updateMutation.mutate({ id: r.id, status: "resolved" })}
+                >
+                  {updateMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    "Resolve"
+                  )}
                 </Button>
               </div>
             </CardContent>

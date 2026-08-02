@@ -54,12 +54,13 @@ export interface Ride {
 
 export type ReportSeverity = "low" | "medium" | "high" | "critical";
 export type ReportCategory = "safety" | "scam" | "harassment" | "fare" | "vehicle" | "other";
+export type ReportStatus = "open" | "in_review" | "resolved";
 
 export interface Report {
   id: string;
   category: ReportCategory;
   severity: ReportSeverity;
-  status: "open" | "in_review" | "resolved";
+  status: ReportStatus;
   reporter: Profile;
   subject: Profile;
   summary: string;

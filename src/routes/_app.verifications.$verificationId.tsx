@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/page";
 import { api } from "@/lib/api";
+import { actions } from "@/lib/actions";
 import type { VerificationStatus } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/verifications/$verificationId")({
@@ -30,9 +31,21 @@ const typeLabel: Record<string, string> = {
 
 function VerificationDetailPage() {
   const { verificationId } = Route.useParams();
+  const queryClient = useQueryClient();
   const verificationQuery = useQuery({
     queryKey: ["verification", verificationId],
     queryFn: () => api.getVerification(verificationId),
+  });
+
+  const decideMutation = useMutation({
+    mutationFn: (decision: "approved" | "rejected") =>
+      actions.decideVerification(verificationId, decision),
+    onSuccess: (_, decision) => {
+      toast.success(decision === "approved" ? "Verification approved" : "Verification rejected");
+      queryClient.invalidateQueries({ queryKey: ["verification", verificationId] });
+      queryClient.invalidateQueries({ queryKey: ["verifications"] });
+    },
+    onError: () => toast.error("Could not update verification"),
   });
 
   const v = verificationQuery.data;
@@ -114,13 +127,26 @@ function VerificationDetailPage() {
                   variant="outline"
                   size="sm"
                   className="text-destructive"
-                  onClick={() => toast.error("Verification rejected")}
+                  disabled={decideMutation.isPending}
+                  onClick={() => decideMutation.mutate("rejected")}
                 >
-                  <XCircle className="size-4" />
+                  {decideMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <XCircle className="size-4" />
+                  )}
                   Reject
                 </Button>
-                <Button size="sm" onClick={() => toast.success("Verification approved")}>
-                  <CheckCircle2 className="size-4" />
+                <Button
+                  size="sm"
+                  disabled={decideMutation.isPending}
+                  onClick={() => decideMutation.mutate("approved")}
+                >
+                  {decideMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="size-4" />
+                  )}
                   Approve
                 </Button>
               </div>
