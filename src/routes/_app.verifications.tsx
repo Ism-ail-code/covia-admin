@@ -11,29 +11,31 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/page";
-import { api } from "@/lib/api";
-import type { VerificationStatus } from "@/lib/types";
+import { adminListVerifications } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/verifications")({
   component: VerificationsPage,
 });
 
-const statusVariant: Record<VerificationStatus, "success" | "warning" | "destructive" | "secondary"> = {
-  pending: "warning",
-  approved: "success",
-  rejected: "destructive",
-  needs_review: "secondary",
-};
-
-const typeLabel: Record<string, string> = {
-  cnic: "CNIC",
-  license: "Licence",
-  vehicle: "Vehicle",
-  document: "Document",
-};
+function statusBadge(status: string): { variant: "success" | "warning" | "destructive" | "secondary"; label: string } {
+  switch (status) {
+    case "approved":
+    case "verified":
+      return { variant: "success", label: status.replace("_", " ") };
+    case "rejected":
+      return { variant: "destructive", label: status.replace("_", " ") };
+    case "in_review":
+      return { variant: "warning", label: "in review" };
+    case "pending":
+    default:
+      return { variant: "warning", label: status.replace("_", " ") };
+  }
+}
 
 function VerificationsPage() {
-  const query = useQuery({ queryKey: ["verifications"], queryFn: api.getVerifications });
+  const query = useQuery({ queryKey: ["verifications", "list"], queryFn: () => adminListVerifications({}) });
+
+  const rows = query.data ?? [];
 
   return (
     <div>
@@ -47,24 +49,29 @@ function VerificationsPage() {
               <TableHead>Type</TableHead>
               <TableHead>Applicant</TableHead>
               <TableHead>Submitted</TableHead>
-              <TableHead>Confidence</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {query.data?.map((v) => (
+            {rows.map((v) => (
               <TableRow key={v.id}>
-                <TableCell className="font-mono text-xs">{v.id}</TableCell>
-                <TableCell>{typeLabel[v.type]}</TableCell>
+                <TableCell className="font-mono text-xs">{v.id.slice(0, 8)}</TableCell>
                 <TableCell>
-                  <p className="text-sm font-medium">{v.applicant.name}</p>
-                  <p className="text-xs text-muted-foreground">{v.applicant.phone}</p>
+                  {v.verification_type === "government_id" ? "Government ID" : "Student"}
+                  {v.government_id_kind ? (
+                    <span className="text-muted-foreground"> · {v.government_id_kind}</span>
+                  ) : null}
                 </TableCell>
-                <TableCell className="text-muted-foreground">{v.submittedAt}</TableCell>
-                <TableCell className="tabular-nums">{Math.round(v.confidence * 100)}%</TableCell>
                 <TableCell>
-                  <Badge variant={statusVariant[v.status]}>{v.status.replace("_", " ")}</Badge>
+                  <p className="text-sm font-medium">{v.user_display_name ?? v.user_email}</p>
+                  <p className="text-xs text-muted-foreground">{v.user_email}</p>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {new Date(v.submitted_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={statusBadge(v.status).variant}>{statusBadge(v.status).label}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button asChild variant="ghost" size="sm">
