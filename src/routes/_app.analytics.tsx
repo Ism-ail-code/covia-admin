@@ -3,44 +3,54 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/page";
-import { api } from "@/lib/api";
+import { adminGetAnalytics } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/analytics")({
   component: AnalyticsPage,
 });
 
 function AnalyticsPage() {
-  const citiesQuery = useQuery({ queryKey: ["cities"], queryFn: api.getCities });
-  const riders = useQuery({ queryKey: ["users"], queryFn: api.getUsers });
+  const analyticsQuery = useQuery({ queryKey: ["analytics"], queryFn: adminGetAnalytics });
 
-  const riderCount = riders.data?.filter((u) => u.role === "rider").length ?? 0;
-  const driverCount = riders.data?.filter((u) => u.role === "driver").length ?? 0;
+  const analytics = analyticsQuery.data;
+
+  const activeRiders = analytics?.users.overview.active_users_30d ?? 0;
+  const verified = analytics?.users.overview.verified_users ?? 0;
+  const completedRides = analytics?.rides.overview.completed_rides ?? 0;
+  const avgOccupancy = analytics?.rides.overview.average_occupancy ?? 0;
+
+  const maxRoute = analytics ? Math.max(...analytics.rides.popular_routes.map((r) => r.rides), 1) : 1;
 
   return (
     <div>
-      <PageHeader title="Analytics" description="Fill rate by market and platform health." />
+      <PageHeader title="Analytics" description="Platform metrics and popular routes." />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Active riders" value={riderCount >= 8 ? "26,900" : riderCount.toString()} />
-        <MetricCard label="Active drivers" value={driverCount >= 3 ? "11,400" : driverCount.toString()} />
-        <MetricCard label="Avg fill rate" value="92%" />
-        <MetricCard label="Trips today" value="57,200" />
+        <MetricCard label="Active riders (30d)" value={activeRiders.toLocaleString()} />
+        <MetricCard label="Verified members" value={verified.toLocaleString()} />
+        <MetricCard label="Completed rides" value={completedRides.toLocaleString()} />
+        <MetricCard label="Avg occupancy" value={avgOccupancy > 0 ? avgOccupancy.toFixed(1) : "—"} />
       </div>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="text-base">Fill rate by city</CardTitle>
+          <CardTitle className="text-base">Popular routes</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          {citiesQuery.data?.map((c) => (
-            <div key={c.city}>
+          {analytics?.rides.popular_routes.map((r) => (
+            <div key={`${r.origin}-${r.destination}`}>
               <div className="mb-1.5 flex items-center justify-between text-sm">
-                <span className="font-medium">{c.city}</span>
-                <span className="tabular-nums text-muted-foreground">{Math.round(c.fillRate * 100)}%</span>
+                <span className="font-medium">
+                  {r.origin} → {r.destination}
+                </span>
+                <span className="tabular-nums text-muted-foreground">{r.rides} rides</span>
               </div>
-              <Progress value={c.fillRate * 100} />
+              <Progress value={(r.rides / maxRoute) * 100} />
             </div>
           ))}
+          {analytics && analytics.rides.popular_routes.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">No route data yet.</p>
+          ) : null}
         </CardContent>
       </Card>
     </div>
