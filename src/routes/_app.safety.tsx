@@ -1,51 +1,67 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/page";
-import { api } from "@/lib/api";
+import { adminListModerationRules } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/safety")({
   component: SafetyPage,
 });
 
+function ruleBadge(actionType: string | null): { variant: "warning" | "destructive" | "secondary"; label: string } {
+  if (!actionType) return { variant: "secondary", label: "monitor only" };
+  if (actionType === "ban") return { variant: "destructive", label: "ban" };
+  if (actionType === "suspend") return { variant: "warning", label: "suspend" };
+  return { variant: "secondary", label: actionType.replace("_", " ") };
+}
+
 function SafetyPage() {
-  const policiesQuery = useQuery({ queryKey: ["safetyPolicies"], queryFn: api.getSafetyPolicies });
+  const rulesQuery = useQuery({ queryKey: ["safetyRules"], queryFn: adminListModerationRules });
+
+  const rows = rulesQuery.data ?? [];
 
   return (
     <div>
       <PageHeader
         title="Safety & Policies"
-        description="Guard rails that shape ride routing and rider care."
-        actions={
-          <Button size="sm">
-            <Plus className="size-4" />
-            New policy
-          </Button>
-        }
+        description="Reliability thresholds that trigger moderation automatically."
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {policiesQuery.data?.map((p) => (
-          <Card key={p.id}>
+        {rows.map((r) => (
+          <Card key={r.rule_name}>
             <CardHeader className="flex-row items-start justify-between space-y-0">
               <div>
-                <CardTitle className="text-base">{p.name}</CardTitle>
-                <p className="mt-0.5 font-mono text-xs text-muted-foreground">{p.id}</p>
+                <CardTitle className="text-base">{r.rule_name.replace(/_/g, " ")}</CardTitle>
+                <p className="mt-0.5 font-mono text-xs text-muted-foreground">{r.rule_name}</p>
               </div>
-              <Switch defaultChecked={p.enabled} aria-label="Toggle policy" />
+              <Switch defaultChecked={r.enabled} aria-label="Toggle policy" disabled />
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">{p.description}</p>
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Threshold</p>
+                  <p className="font-medium tabular-nums">{r.threshold ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Action</p>
+                  <Badge variant={ruleBadge(r.action_type).variant}>{ruleBadge(r.action_type).label}</Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Duration</p>
+                  <p className="font-medium tabular-nums">
+                    {r.duration_hours ? `${r.duration_hours}h` : "—"}
+                  </p>
+                </div>
+              </div>
               <Separator className="my-4" />
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Updated {p.updatedAt}</span>
-                <Badge variant="secondary">
-                  {p.rules} rule{p.rules === 1 ? "" : "s"}
+                <span className="text-muted-foreground">Severity {r.severity}</span>
+                <Badge variant={r.enabled ? "success" : "secondary"}>
+                  {r.enabled ? "enabled" : "disabled"}
                 </Badge>
               </div>
             </CardContent>
