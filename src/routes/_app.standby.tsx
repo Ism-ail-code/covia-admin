@@ -34,10 +34,13 @@ function StandbyPage() {
         title="Standby Pool"
         description="Checkpoints that catch missed taps and keep short rides on track."
         actions={
-          <Button variant="outline" size="sm">
-            <Radar className="size-4" />
-            Test coverage
-          </Button>
+          <>
+            <Badge variant="secondary">mock data — no standby backend yet</Badge>
+            <Button variant="outline" size="sm">
+              <Radar className="size-4" />
+              Test coverage
+            </Button>
+          </>
         }
       />
 

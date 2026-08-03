@@ -35,7 +35,11 @@ function TicketsPage() {
 
   return (
     <div>
-      <PageHeader title="Support tickets" description="Inbound issues from riders and drivers." />
+      <PageHeader
+        title="Support tickets"
+        description="Inbound issues from riders and drivers."
+        actions={<Badge variant="secondary">mock data — no support-ticket backend yet</Badge>}
+      />
 
       <div className="overflow-hidden rounded-lg border bg-card">
         <Table>
