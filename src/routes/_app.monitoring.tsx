@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { guardPermission } from "@/lib/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, ShieldAlert, FileCheck, Gauge } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ import {
 } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/monitoring")({
+  beforeLoad: () => guardPermission("monitor.view"),
   component: MonitoringPage,
 });
 
@@ -92,25 +94,25 @@ function MonitoringPage() {
         <StatTile
           icon={Activity}
           label="Platform status"
-          value={health ? (health.status === "ok" ? "OK" : "Degraded") : "…"}
+          value={health ? (health.status === "ok" ? "OK" : "Degraded") : "â€¦"}
           tone={health ? (health.status === "ok" ? "success" : "danger") : "default"}
         />
         <StatTile
           icon={ShieldAlert}
           label="Unresolved SOS"
-          value={openSos ? openSos.detail?.split(" ")[0] ?? "…" : "…"}
+          value={openSos ? openSos.detail?.split(" ")[0] ?? "â€¦" : "â€¦"}
           tone={openSos?.ok ? "success" : "danger"}
         />
         <StatTile
           icon={FileCheck}
           label="Pending verifications"
-          value={verificationQuery.isLoading ? "…" : pendingVerifications}
+          value={verificationQuery.isLoading ? "â€¦" : pendingVerifications}
           tone={pendingVerifications > 0 ? "warning" : "success"}
         />
         <StatTile
           icon={Gauge}
           label="Errors (24h)"
-          value={errors24h ? errors24h.detail?.split(" ")[0] ?? "…" : "…"}
+          value={errors24h ? errors24h.detail?.split(" ")[0] ?? "â€¦" : "â€¦"}
           tone={errors24h?.ok ? "success" : "danger"}
         />
       </div>
@@ -160,7 +162,7 @@ function MonitoringPage() {
                       <TableCell>
                         <Badge variant={a.status === "active" ? "destructive" : "secondary"}>{a.status}</Badge>
                       </TableCell>
-                      <TableCell className="max-w-xs truncate text-muted-foreground">{a.reason ?? "—"}</TableCell>
+                      <TableCell className="max-w-xs truncate text-muted-foreground">{a.reason ?? "â€”"}</TableCell>
                       <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
                         {new Date(a.created_at).toLocaleString()}
                       </TableCell>

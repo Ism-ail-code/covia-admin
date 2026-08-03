@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
+import { guardPermission } from "@/lib/route-guards";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -21,6 +22,7 @@ import { ErrorState } from "@/components/page";
 import { adminListVerifications } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/verifications")({
+  beforeLoad: () => guardPermission("verification.view"),
   component: VerificationsPage,
 });
 
@@ -103,7 +105,7 @@ function VerificationsPage() {
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-8"
-            placeholder="Search applicant or email…"
+            placeholder="Search applicant or emailâ€¦"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -141,7 +143,7 @@ function VerificationsPage() {
                     <TableCell>
                       {v.verification_type === "government_id" ? "Government ID" : "Student"}
                       {v.government_id_kind ? (
-                        <span className="text-muted-foreground"> · {v.government_id_kind}</span>
+                        <span className="text-muted-foreground"> Â· {v.government_id_kind}</span>
                       ) : null}
                     </TableCell>
                     <TableCell>

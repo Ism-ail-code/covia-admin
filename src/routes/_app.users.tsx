@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
+import { guardPermission } from "@/lib/route-guards";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Download, Search, UserPlus } from "lucide-react";
@@ -22,6 +23,7 @@ import { ErrorState } from "@/components/page";
 import { adminSearchUsers, type AdminUserRow, type UserStatusFilter } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/users")({
+  beforeLoad: () => guardPermission("user.view"),
   component: UsersPage,
 });
 
@@ -122,7 +124,7 @@ function UsersPage() {
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-8"
-            placeholder="Search name, username or email…"
+            placeholder="Search name, username or emailâ€¦"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

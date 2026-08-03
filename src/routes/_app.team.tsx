@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { guardPermission } from "@/lib/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -10,6 +11,7 @@ import { adminListAdminUsers } from "@/lib/adminApi";
 import { ROLE_PERMISSIONS } from "@/lib/rbac";
 
 export const Route = createFileRoute("/_app/team")({
+  beforeLoad: () => guardPermission("admin.manage"),
   component: TeamPage,
 });
 

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Ban, Loader2, ShieldCheck, UserCheck } from "lucide-react";
 import { toast } from "sonner";
+import { guardPermission } from "@/lib/route-guards";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ import {
 } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/users/$userId")({
+  beforeLoad: () => guardPermission("user.view"),
   component: UserDetailPage,
 });
 

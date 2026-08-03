@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as AccessDeniedRouteImport } from './routes/access-denied'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
@@ -29,6 +30,11 @@ import { Route as AppVerificationsVerificationIdRouteImport } from './routes/_ap
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccessDeniedRoute = AccessDeniedRouteImport.update({
+  id: '/access-denied',
+  path: '/access-denied',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -115,6 +121,7 @@ const AppVerificationsVerificationIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/access-denied': typeof AccessDeniedRoute
   '/login': typeof LoginRoute
   '/analytics': typeof AppAnalyticsRoute
   '/appeals': typeof AppAppealsRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/verifications/$verificationId': typeof AppVerificationsVerificationIdRoute
 }
 export interface FileRoutesByTo {
+  '/access-denied': typeof AccessDeniedRoute
   '/login': typeof LoginRoute
   '/analytics': typeof AppAnalyticsRoute
   '/appeals': typeof AppAppealsRoute
@@ -152,6 +160,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/access-denied': typeof AccessDeniedRoute
   '/login': typeof LoginRoute
   '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/appeals': typeof AppAppealsRoute
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/access-denied'
     | '/login'
     | '/analytics'
     | '/appeals'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/verifications/$verificationId'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/access-denied'
     | '/login'
     | '/analytics'
     | '/appeals'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_app'
+    | '/access-denied'
     | '/login'
     | '/_app/analytics'
     | '/_app/appeals'
@@ -229,6 +241,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  AccessDeniedRoute: typeof AccessDeniedRoute
   LoginRoute: typeof LoginRoute
 }
 
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/access-denied': {
+      id: '/access-denied'
+      path: '/access-denied'
+      fullPath: '/access-denied'
+      preLoaderRoute: typeof AccessDeniedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -415,6 +435,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  AccessDeniedRoute: AccessDeniedRoute,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport

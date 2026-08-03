@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { guardPermission } from "@/lib/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -7,6 +8,7 @@ import { ErrorState } from "@/components/page";
 import { adminGetAnalytics } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/analytics")({
+  beforeLoad: () => guardPermission("analytics.view"),
   component: AnalyticsPage,
 });
 
@@ -34,7 +36,7 @@ function AnalyticsPage() {
         <MetricCard label="Active riders (30d)" value={activeRiders.toLocaleString()} />
         <MetricCard label="Verified members" value={verified.toLocaleString()} />
         <MetricCard label="Completed rides" value={completedRides.toLocaleString()} />
-        <MetricCard label="Avg occupancy" value={avgOccupancy > 0 ? avgOccupancy.toFixed(1) : "—"} />
+        <MetricCard label="Avg occupancy" value={avgOccupancy > 0 ? avgOccupancy.toFixed(1) : "â€”"} />
       </div>
 
       <Card className="mt-6">
@@ -46,7 +48,7 @@ function AnalyticsPage() {
             <div key={`${r.origin}-${r.destination}`}>
               <div className="mb-1.5 flex items-center justify-between text-sm">
                 <span className="font-medium">
-                  {r.origin} → {r.destination}
+                  {r.origin} â†’ {r.destination}
                 </span>
                 <span className="tabular-nums text-muted-foreground">{r.rides} rides</span>
               </div>

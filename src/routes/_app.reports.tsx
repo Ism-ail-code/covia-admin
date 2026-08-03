@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { guardPermission } from "@/lib/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +11,7 @@ import { ErrorState } from "@/components/page";
 import { adminListReports, adminReviewReport } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/reports")({
+  beforeLoad: () => guardPermission("report.view"),
   component: ReportsPage,
 });
 
@@ -62,8 +64,8 @@ function ReportsPage() {
                 </div>
                 <p className="mt-1.5 text-sm">{r.reason}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Reported by {r.reporter_name ?? r.reporter_user_id.slice(0, 8)} ·{" "}
-                  {r.target_user_name ?? r.target_user_id?.slice(0, 8) ?? "ride"} ·{" "}
+                  Reported by {r.reporter_name ?? r.reporter_user_id.slice(0, 8)} Â·{" "}
+                  {r.target_user_name ?? r.target_user_id?.slice(0, 8) ?? "ride"} Â·{" "}
                   {new Date(r.created_at).toLocaleDateString()}
                 </p>
               </div>

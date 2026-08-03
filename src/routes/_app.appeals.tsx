@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { guardPermission } from "@/lib/route-guards";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ import { ErrorState } from "@/components/page";
 import { adminDecideAppeal, adminListAppeals } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/appeals")({
+  beforeLoad: () => guardPermission("appeal.view"),
   component: AppealsPage,
 });
 

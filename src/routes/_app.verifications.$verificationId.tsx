@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2, FileX2, Loader2, RotateCcw, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { guardPermission } from "@/lib/route-guards";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { DocumentPreview } from "@/components/verification/document-preview";
 import { adminListVerifications, adminReviewVerification } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/verifications/$verificationId")({
+  beforeLoad: () => guardPermission("verification.view"),
   component: VerificationDetailPage,
 });
 

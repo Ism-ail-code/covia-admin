@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { guardPermission } from "@/lib/route-guards";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -10,6 +11,7 @@ import { useAuth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 
 export const Route = createFileRoute("/_app/settings")({
+  beforeLoad: () => guardPermission("config.view"),
   component: SettingsPage,
 });
 
@@ -106,7 +108,7 @@ function SettingsPage() {
               <div className="rounded-md border bg-muted/40 px-3 py-2">
                 {user?.name}
                 <span className="text-muted-foreground">
-                  {" "}· {user?.email} ({user?.role.replace("_", " ")})
+                  {" "}Â· {user?.email} ({user?.role.replace("_", " ")})
                 </span>
               </div>
               <Separator />

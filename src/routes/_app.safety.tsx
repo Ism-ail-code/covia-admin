@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { guardPermission } from "@/lib/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { ErrorState } from "@/components/page";
 import { adminListModerationRules } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/safety")({
+  beforeLoad: () => guardPermission("config.view"),
   component: SafetyPage,
 });
 
@@ -49,7 +51,7 @@ function SafetyPage() {
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div>
                   <p className="text-xs text-muted-foreground">Threshold</p>
-                  <p className="font-medium tabular-nums">{r.threshold ?? "—"}</p>
+                  <p className="font-medium tabular-nums">{r.threshold ?? "â€”"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Action</p>
@@ -58,7 +60,7 @@ function SafetyPage() {
                 <div>
                   <p className="text-xs text-muted-foreground">Duration</p>
                   <p className="font-medium tabular-nums">
-                    {r.duration_hours ? `${r.duration_hours}h` : "—"}
+                    {r.duration_hours ? `${r.duration_hours}h` : "â€”"}
                   </p>
                 </div>
               </div>

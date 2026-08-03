@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
+import { guardPermission } from "@/lib/route-guards";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -21,6 +22,7 @@ import { ErrorState } from "@/components/page";
 import { adminSearchRides } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/rides")({
+  beforeLoad: () => guardPermission("ride.view"),
   component: RidesPage,
 });
 
@@ -97,7 +99,7 @@ function RidesPage() {
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-8"
-            placeholder="Search origin, destination or host…"
+            placeholder="Search origin, destination or hostâ€¦"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
