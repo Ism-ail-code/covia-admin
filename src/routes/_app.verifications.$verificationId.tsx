@@ -7,48 +7,47 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/page";
-import { api } from "@/lib/api";
-import { actions } from "@/lib/actions";
-import type { VerificationStatus } from "@/lib/types";
+import { adminListVerifications, adminReviewVerification } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/verifications/$verificationId")({
   component: VerificationDetailPage,
 });
 
-const statusVariant: Record<VerificationStatus, "success" | "warning" | "destructive" | "secondary"> = {
-  pending: "warning",
-  approved: "success",
-  rejected: "destructive",
-  needs_review: "secondary",
-};
-
-const typeLabel: Record<string, string> = {
-  cnic: "CNIC",
-  license: "Driving licence",
-  vehicle: "Vehicle registration",
-  document: "Supporting document",
-};
+function statusBadge(status: string): { variant: "success" | "warning" | "destructive" | "secondary"; label: string } {
+  switch (status) {
+    case "approved":
+    case "verified":
+      return { variant: "success", label: status.replace("_", " ") };
+    case "rejected":
+      return { variant: "destructive", label: "rejected" };
+    case "in_review":
+      return { variant: "warning", label: "in review" };
+    case "pending":
+    default:
+      return { variant: "warning", label: "pending" };
+  }
+}
 
 function VerificationDetailPage() {
   const { verificationId } = Route.useParams();
   const queryClient = useQueryClient();
-  const verificationQuery = useQuery({
-    queryKey: ["verification", verificationId],
-    queryFn: () => api.getVerification(verificationId),
+
+  const submissionQuery = useQuery({
+    queryKey: ["verifications", "list"],
+    queryFn: () => adminListVerifications({}),
+    select: (rows) => rows.find((v) => v.id === verificationId),
   });
 
-  const decideMutation = useMutation({
-    mutationFn: (decision: "approved" | "rejected") =>
-      actions.decideVerification(verificationId, decision),
-    onSuccess: (_, decision) => {
-      toast.success(decision === "approved" ? "Verification approved" : "Verification rejected");
-      queryClient.invalidateQueries({ queryKey: ["verification", verificationId] });
+  const reviewMutation = useMutation({
+    mutationFn: (action: "approve" | "reject") => adminReviewVerification(verificationId, action),
+    onSuccess: (_, action) => {
+      toast.success(action === "approve" ? "Verification approved" : "Verification rejected");
       queryClient.invalidateQueries({ queryKey: ["verifications"] });
     },
-    onError: () => toast.error("Could not update verification"),
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update verification"),
   });
 
-  const v = verificationQuery.data;
+  const v = submissionQuery.data;
 
   if (!v) return null;
 
@@ -62,30 +61,40 @@ function VerificationDetailPage() {
       </Button>
 
       <PageHeader
-        title={`${typeLabel[v.type]} review`}
-        description={`${v.id} · submitted ${v.submittedAt}`}
-        actions={<Badge variant={statusVariant[v.status]}>{v.status.replace("_", " ")}</Badge>}
+        title={`${v.verification_type === "government_id" ? "Government ID" : "Student"} review`}
+        description={`${v.id.slice(0, 8)} · submitted ${new Date(v.submitted_at).toLocaleDateString()}`}
+        actions={<Badge variant={statusBadge(v.status).variant}>{statusBadge(v.status).label}</Badge>}
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Document preview</CardTitle>
+            <CardTitle className="text-base">Submitted documents</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid aspect-video place-items-center rounded-lg border bg-muted/40">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">{typeLabel[v.type]}</p>
+                <p className="text-sm text-muted-foreground">
+                  {v.verification_type === "government_id" ? v.government_id_kind ?? "Government ID" : "Student card"}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Placeholder — real scans load from Supabase storage.
+                  Signed links load from the private verification-documents bucket.
                 </p>
               </div>
             </div>
-            {v.notes && (
+            {v.university_email && (
               <>
                 <Separator className="my-4" />
                 <p className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Reviewer notes:</span> {v.notes}
+                  <span className="font-medium text-foreground">University email:</span> {v.university_email}
+                </p>
+              </>
+            )}
+            {v.rejection_reason && (
+              <>
+                <Separator className="my-4" />
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Rejection reason:</span> {v.rejection_reason}
                 </p>
               </>
             )}
@@ -99,22 +108,22 @@ function VerificationDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div>
-                <p className="font-medium">{v.applicant.name}</p>
-                <p className="text-xs text-muted-foreground">{v.applicant.phone}</p>
+                <p className="font-medium">{v.user_display_name ?? v.user_email}</p>
+                <p className="text-xs text-muted-foreground">{v.user_email}</p>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Auto-check confidence</span>
-                <span className="tabular-nums font-medium">{Math.round(v.confidence * 100)}%</span>
-              </div>
-              <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Submitted</span>
-                <span className="tabular-nums font-medium">{v.submittedAt}</span>
+                <span className="tabular-nums font-medium">
+                  {new Date(v.submitted_at).toLocaleDateString()}
+                </span>
               </div>
-              {v.expiresAt && (
+              {v.reviewed_at && (
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Expires</span>
-                  <span className="tabular-nums font-medium">{v.expiresAt}</span>
+                  <span className="text-muted-foreground">Reviewed</span>
+                  <span className="tabular-nums font-medium">
+                    {new Date(v.reviewed_at).toLocaleDateString()}
+                  </span>
                 </div>
               )}
             </CardContent>
@@ -127,10 +136,10 @@ function VerificationDetailPage() {
                   variant="outline"
                   size="sm"
                   className="text-destructive"
-                  disabled={decideMutation.isPending}
-                  onClick={() => decideMutation.mutate("rejected")}
+                  disabled={reviewMutation.isPending}
+                  onClick={() => reviewMutation.mutate("reject")}
                 >
-                  {decideMutation.isPending ? (
+                  {reviewMutation.isPending ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
                     <XCircle className="size-4" />
@@ -139,10 +148,10 @@ function VerificationDetailPage() {
                 </Button>
                 <Button
                   size="sm"
-                  disabled={decideMutation.isPending}
-                  onClick={() => decideMutation.mutate("approved")}
+                  disabled={reviewMutation.isPending}
+                  onClick={() => reviewMutation.mutate("approve")}
                 >
-                  {decideMutation.isPending ? (
+                  {reviewMutation.isPending ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
                     <CheckCircle2 className="size-4" />
