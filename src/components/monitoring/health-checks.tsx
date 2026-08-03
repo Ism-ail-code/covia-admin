@@ -4,9 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/page";
 import { getPlatformHealth } from "@/lib/adminApi";
+import { usePollEvery } from "@/lib/poll";
 
 export function HealthChecks() {
-  const query = useQuery({ queryKey: ["monitoring", "health"], queryFn: getPlatformHealth, refetchInterval: 30_000 });
+  const interval = usePollEvery(30_000);
+  const query = useQuery({
+    queryKey: ["monitoring", "health"],
+    queryFn: getPlatformHealth,
+    refetchInterval: interval,
+  });
 
   if (query.isLoading) {
     return (

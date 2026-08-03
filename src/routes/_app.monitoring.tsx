@@ -1,4 +1,5 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
+import { memo } from "react";
 import { guardPermission } from "@/lib/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, ShieldAlert, FileCheck, Gauge } from "lucide-react";
@@ -15,13 +16,14 @@ import {
   adminListVerifications,
   getPlatformHealth,
 } from "@/lib/adminApi";
+import { usePollEvery } from "@/lib/poll";
 
 export const Route = createFileRoute("/_app/monitoring")({
   beforeLoad: () => guardPermission("monitor.view"),
   component: MonitoringPage,
 });
 
-function StatTile({
+const StatTile = memo(function StatTile({
   icon: Icon,
   label,
   value,
@@ -50,22 +52,29 @@ function StatTile({
           <p className="text-2xl font-semibold tabular-nums leading-none">{value}</p>
           <p className="mt-1 text-xs text-muted-foreground">{label}</p>
         </div>
-      </CardContent>
+</CardContent>
     </Card>
   );
-}
+});
 
 function MonitoringPage() {
-  const healthQuery = useQuery({ queryKey: ["monitoring", "health"], queryFn: getPlatformHealth, refetchInterval: 30_000 });
+  const healthInterval = usePollEvery(30_000);
+  const healthQuery = useQuery({
+    queryKey: ["monitoring", "health"],
+    queryFn: getPlatformHealth,
+    refetchInterval: healthInterval,
+  });
+  const actionsInterval = usePollEvery(30_000);
   const moderationQuery = useQuery({
     queryKey: ["monitoring", "moderation"],
     queryFn: () => adminListModerationActions({ page: 1, pageSize: 20 }),
-    refetchInterval: 30_000,
+    refetchInterval: actionsInterval,
   });
+  const verificationInterval = usePollEvery(30_000);
   const verificationQuery = useQuery({
     queryKey: ["monitoring", "verifications"],
     queryFn: () => adminListVerifications({ status: "pending" }),
-    refetchInterval: 30_000,
+    refetchInterval: verificationInterval,
   });
 
   const health = healthQuery.data;

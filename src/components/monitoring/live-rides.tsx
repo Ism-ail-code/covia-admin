@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ErrorState } from "@/components/page";
 import { adminSearchRides, type AdminRideRow } from "@/lib/adminApi";
 import { subscribeToRides, type RideRealtimePayload } from "@/lib/realtime";
+import { usePollEvery } from "@/lib/poll";
 
 function statusBadge(status: string): { variant: "success" | "warning" | "secondary"; label: string } {
   switch (status) {
@@ -27,10 +28,11 @@ function mergePayload(prev: AdminRideRow | undefined, payload: RideRealtimePaylo
 }
 
 export function LiveRides() {
+  const interval = usePollEvery(30_000);
   const snapshotQuery = useQuery({
     queryKey: ["monitoring", "rides", "live"],
     queryFn: () => adminSearchRides({ status: "in_progress", pageSize: 100 }),
-    refetchInterval: 30_000,
+    refetchInterval: interval,
   });
   const [rides, setRides] = useState<Record<string, AdminRideRow>>({});
 

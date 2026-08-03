@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState, ErrorState } from "@/components/page";
 import { adminListMonitoringEvents, type MonitoringEventRow } from "@/lib/adminApi";
 import { cn } from "@/lib/utils";
+import { usePollEvery } from "@/lib/poll";
 
 const LEVELS = ["warn", "error", "critical"] as const;
 
@@ -25,10 +26,11 @@ function levelBadge(level: string): { variant: "warning" | "destructive" | "seco
 
 export function MonitoringEventsLog() {
   const [level, setLevel] = useState<string | null>(null);
+  const interval = usePollEvery(15_000);
   const query = useQuery({
     queryKey: ["monitoring", "events", level ?? "all"],
     queryFn: () => adminListMonitoringEvents({ level, page: 1, pageSize: 50 }),
-    refetchInterval: 15_000,
+    refetchInterval: interval,
   });
 
   const rows = query.data?.items ?? [];
