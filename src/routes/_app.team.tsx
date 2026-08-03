@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page";
-import { api } from "@/lib/api";
+import { adminListAdminUsers } from "@/lib/adminApi";
+import { ROLE_PERMISSIONS } from "@/lib/rbac";
 
 export const Route = createFileRoute("/_app/team")({
   component: TeamPage,
@@ -21,7 +22,9 @@ function initials(name: string) {
 }
 
 function TeamPage() {
-  const adminsQuery = useQuery({ queryKey: ["admins"], queryFn: api.getAdmins });
+  const adminsQuery = useQuery({ queryKey: ["admins"], queryFn: adminListAdminUsers });
+
+  const rows = adminsQuery.data ?? [];
 
   return (
     <div>
@@ -29,7 +32,7 @@ function TeamPage() {
         title="Team"
         description="Admins and the permissions they hold."
         actions={
-          <Button size="sm">
+          <Button size="sm" disabled>
             <UserPlus className="size-4" />
             Invite admin
           </Button>
@@ -37,21 +40,21 @@ function TeamPage() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {adminsQuery.data?.map((a) => (
-          <div key={a.id} className="rounded-lg border bg-card p-4">
+        {rows.map((a) => (
+          <div key={a.user_id} className="rounded-lg border bg-card p-4">
             <div className="flex items-start justify-between">
               <Avatar className="size-10">
-                <AvatarFallback>{initials(a.name)}</AvatarFallback>
+                <AvatarFallback>{initials(a.display_name ?? a.email)}</AvatarFallback>
               </Avatar>
-              <Badge variant={a.role === "super_admin" ? "default" : "secondary"}>
-                {a.role.replace("_", " ")}
+              <Badge variant={a.role_name === "super_admin" ? "default" : "secondary"}>
+                {a.role_name.replace("_", " ")}
               </Badge>
             </div>
-            <p className="mt-3 text-sm font-semibold">{a.name}</p>
+            <p className="mt-3 text-sm font-semibold">{a.display_name ?? a.email}</p>
             <p className="text-xs text-muted-foreground">{a.email}</p>
-            <p className="mt-2 text-xs text-muted-foreground">Last active {a.lastActive}</p>
+            <p className="mt-2 text-xs text-muted-foreground">Since {new Date(a.created_at).toLocaleDateString()}</p>
             <div className="mt-3 flex flex-wrap gap-1">
-              {a.permissions.map((p) => (
+              {ROLE_PERMISSIONS[a.role_name].map((p) => (
                 <Badge key={p} variant="outline" className="font-mono">
                   {p}
                 </Badge>
