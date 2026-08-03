@@ -236,6 +236,12 @@ export async function adminUpdateSafetyConfig(changes: {
   if (error) throw toAdminError(error, "Couldn't update the safety config.");
 }
 
+export async function getSafetyConfig(): Promise<SafetyConfigRow> {
+  const { data, error } = await supabase.rpc("get_safety_config");
+  if (error) throw toAdminError(error, "Couldn't load the safety config.");
+  return data as SafetyConfigRow;
+}
+
 export async function adminListMonitoringEvents(input: {
   level?: string | null;
   source?: string | null;
@@ -260,6 +266,22 @@ export async function adminListReliabilityEvents(userId?: string | null): Promis
   });
   if (error) throw toAdminError(error, "Couldn't load reliability events.");
   return (data as ReliabilityEventRow[]) ?? [];
+}
+
+export async function adminListModerationActions(input: {
+  userId?: string | null;
+  status?: string | null;
+  page?: number;
+  pageSize?: number;
+}): Promise<ModerationActionRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_moderation_actions", {
+    p_user_id: input.userId ?? null,
+    p_status: input.status ?? null,
+    p_page: input.page ?? 1,
+    p_page_size: input.pageSize ?? 50,
+  });
+  if (error) throw toAdminError(error, "Couldn't load moderation actions.");
+  return (data as ModerationActionRow[]) ?? [];
 }
 
 // ── Reports ─────────────────────────────────────────────────────────
@@ -611,6 +633,33 @@ export type MonitoringEventRow = {
 };
 
 export type MonitoringEventPage = { items: MonitoringEventRow[]; totalCount: number };
+
+export type SafetyConfigRow = {
+  id: boolean;
+  route_deviation_meters: number;
+  stop_threshold_seconds: number;
+  safety_check_timeout_seconds: number;
+  never_started_minutes: number;
+  exceeded_duration_minutes: number;
+  notify_participants_on_sos: boolean;
+  sos_repeat_window_seconds: number;
+  live_location_retention_hours: number;
+  updated_at: string;
+};
+
+export type ModerationActionRow = {
+  id: string;
+  user_id: string;
+  user_name: string | null;
+  action_type: string;
+  reason: string | null;
+  status: string;
+  source: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  created_at: string;
+  total_count: string;
+};
 
 export type ReliabilityEventRow = {
   id: string;
