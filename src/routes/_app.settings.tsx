@@ -1,89 +1,128 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/page";
+import { SafetyConfigForm } from "@/components/settings/safety-config";
+import { ModerationRulesEditor } from "@/components/settings/moderation-rules";
 import { useAuth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
 
 export const Route = createFileRoute("/_app/settings")({
   component: SettingsPage,
 });
 
+function FutureSettingsCard({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex-row items-start justify-between space-y-0">
+        <div>
+          <CardTitle className="text-base">{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        <Badge variant="outline">Coming soon</Badge>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-lg border border-dashed bg-muted/30 p-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            This section is read-only for now. Once the corresponding backend settings are exposed,
+            it will become editable here.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function SettingsPage() {
   const user = useAuth();
+  const canView = can(user?.role ?? null, "config.view");
+  const canManage = can(user?.role ?? null, "config.manage");
+
+  if (!canView) {
+    return (
+      <div>
+        <PageHeader title="Settings" description="Workspace preferences and configuration." />
+        <Card>
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            You don't have permission to view configuration settings.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <PageHeader title="Settings" description="Workspace preferences and security." />
+      <PageHeader
+        title="Settings"
+        description="Safety, moderation and platform configuration."
+        actions={!canManage ? <Badge variant="outline">Read-only</Badge> : undefined}
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Workspace profile</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="workspace">Workspace name</Label>
-              <Input id="workspace" defaultValue="Covia" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="market">Primary market</Label>
-              <Input id="market" defaultValue="Pakistan" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Input id="currency" defaultValue="PKR" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="safety">
+            <TabsList>
+              <TabsTrigger value="safety">Safety</TabsTrigger>
+              <TabsTrigger value="moderation">Moderation</TabsTrigger>
+              <TabsTrigger value="platform">Platform</TabsTrigger>
+              <TabsTrigger value="verification">Verification</TabsTrigger>
+            </TabsList>
+            <TabsContent value="safety" className="space-y-4">
+              <SafetyConfigForm canManage={canManage} />
+            </TabsContent>
+            <TabsContent value="moderation" className="space-y-4">
+              <ModerationRulesEditor canConfigure={canManage} />
+            </TabsContent>
+            <TabsContent value="platform" className="space-y-4">
+              <FutureSettingsCard
+                title="Platform settings"
+                description="Feature flags, maintenance mode and platform-wide preferences."
+              />
+            </TabsContent>
+            <TabsContent value="verification" className="space-y-4">
+              <FutureSettingsCard
+                title="Verification settings"
+                description="Document requirements, verification thresholds and expiry policies."
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Signed in as</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="rounded-md border bg-muted/40 px-3 py-2">
-              {user?.name}
-              <span className="text-muted-foreground">
-                {" "}· {user?.email} ({user?.role.replace("_", " ")})
-              </span>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Email notifications</p>
-                <p className="text-xs text-muted-foreground">Digest for pending moderation</p>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Signed in as</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="rounded-md border bg-muted/40 px-3 py-2">
+                {user?.name}
+                <span className="text-muted-foreground">
+                  {" "}· {user?.email} ({user?.role.replace("_", " ")})
+                </span>
               </div>
-              <Switch defaultChecked />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Two-factor authentication</p>
-                <p className="text-xs text-muted-foreground">Require a code on this device</p>
-              </div>
-              <Switch />
-            </div>
-          </CardContent>
-        </Card>
+              <Separator />
+              <p className="text-xs text-muted-foreground">
+                {canManage
+                  ? "You can edit safety and moderation settings. Changes are written to the backend and recorded in the audit log."
+                  : "You have read-only access to these settings. Request an admin to make changes."}
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Danger zone</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Badge variant="destructive">Read-only preview</Badge>
-            <p className="text-sm text-muted-foreground">
-              Actions become live once Supabase auth is wired in.
-            </p>
-            <Button variant="outline" size="sm" className="w-full" disabled>
-              Export workspace data
-            </Button>
-          </CardContent>
-        </Card>
+          <FutureSettingsCard
+            title="Danger zone"
+            description="Export workspace data and other destructive actions."
+          />
+        </div>
       </div>
     </div>
   );
