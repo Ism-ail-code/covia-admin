@@ -56,8 +56,7 @@ npm run preview # preview the production build
 
 ## Notes
 
-- Pages still browsing in-memory mock data (`src/data/mock.ts`,
-  `src/lib/api.ts`, `src/lib/actions.ts`) are documented as such in the UI and
-  are the next swap candidates once Phase 1 (auth/RBAC/dashboard/realtime) is
-  signed off.
+- Pages still on mock data (`src/data/mock.ts`): **Support tickets** and
+  **Standby pool** — no backend tables/RPCs exist for these yet, so they are
+  badged in the UI as mock until a backend surface lands.
 - Do not run `tsc` against `dist`; the typecheck runs via `npm run build`.
