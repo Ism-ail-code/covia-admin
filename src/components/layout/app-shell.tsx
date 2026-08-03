@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import {
+  Activity,
   BarChart3,
   Bell,
   FileCheck,
@@ -53,6 +54,7 @@ const NAVIGATION: NavSection[] = [
   {
     label: "Trust & Safety",
     items: [
+      { title: "Live Monitoring", to: "/monitoring", icon: Activity },
       { title: "Safety & Policies", to: "/safety", icon: ShieldCheck },
       { title: "Standby Pool", to: "/standby", icon: Zap },
     ],
