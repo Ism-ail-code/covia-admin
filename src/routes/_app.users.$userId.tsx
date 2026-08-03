@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/page";
+import { ErrorState } from "@/components/page";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   adminBanUser,
   adminGetUserProfile,
@@ -74,6 +76,25 @@ function UserDetailPage() {
 
   const u = profileQuery.data;
   const rides = historyQuery.data ?? [];
+
+  if (profileQuery.isLoading) {
+    return (
+      <div>
+        <Skeleton className="mb-4 h-8 w-40" />
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <Skeleton className="h-6 w-1/2" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (profileQuery.isError) {
+    return <ErrorState message="Could not load this user." onRetry={() => void profileQuery.refetch()} />;
+  }
 
   if (!u) return null;
 
@@ -216,6 +237,8 @@ function UserDetailPage() {
             <div className="space-y-2">
               {historyQuery.isLoading ? (
                 <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>
+              ) : historyQuery.isError ? (
+                <p className="py-6 text-center text-sm text-destructive">Could not load ride history.</p>
               ) : rides.length === 0 ? (
                 <p className="py-6 text-center text-sm text-muted-foreground">No ride history yet.</p>
               ) : (
