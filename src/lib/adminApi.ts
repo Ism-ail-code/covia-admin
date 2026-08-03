@@ -188,6 +188,80 @@ export async function adminReviewVerification(
   if (error) throw toAdminError(error, "Couldn't review the submission.");
 }
 
+// ── Safety / moderation ─────────────────────────────────────────────
+
+export async function adminListModerationRules(): Promise<ModerationRuleRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_moderation_rules", { p_page: 1, p_page_size: 100 });
+  if (error) throw toAdminError(error, "Couldn't load moderation rules.");
+  return (data as ModerationRuleRow[]) ?? [];
+}
+
+export async function adminUpdateModerationRule(input: {
+  ruleName: string;
+  threshold?: number | null;
+  actionType?: string | null;
+  durationHours?: number | null;
+  enabled?: boolean | null;
+}): Promise<void> {
+  const { error } = await supabase.rpc("admin_update_moderation_rule", {
+    p_rule_name: input.ruleName,
+    p_threshold: input.threshold ?? null,
+    p_action_type: input.actionType ?? null,
+    p_duration_hours: input.durationHours ?? null,
+    p_enabled: input.enabled ?? null,
+  });
+  if (error) throw toAdminError(error, "Couldn't update the rule.");
+}
+
+export async function adminUpdateSafetyConfig(changes: {
+  routeDeviationMeters?: number | null;
+  stopThresholdSeconds?: number | null;
+  safetyCheckTimeoutSeconds?: number | null;
+  neverStartedMinutes?: number | null;
+  exceededDurationMinutes?: number | null;
+  notifyParticipantsOnSos?: boolean | null;
+  sosRepeatWindowSeconds?: number | null;
+  liveLocationRetentionHours?: number | null;
+}): Promise<void> {
+  const { error } = await supabase.rpc("admin_update_safety_config", {
+    p_route_deviation_meters: changes.routeDeviationMeters ?? null,
+    p_stop_threshold_seconds: changes.stopThresholdSeconds ?? null,
+    p_safety_check_timeout_seconds: changes.safetyCheckTimeoutSeconds ?? null,
+    p_never_started_minutes: changes.neverStartedMinutes ?? null,
+    p_exceeded_duration_minutes: changes.exceededDurationMinutes ?? null,
+    p_notify_participants_on_sos: changes.notifyParticipantsOnSos ?? null,
+    p_sos_repeat_window_seconds: changes.sosRepeatWindowSeconds ?? null,
+    p_live_location_retention_hours: changes.liveLocationRetentionHours ?? null,
+  });
+  if (error) throw toAdminError(error, "Couldn't update the safety config.");
+}
+
+export async function adminListMonitoringEvents(input: {
+  level?: string | null;
+  source?: string | null;
+  page?: number;
+  pageSize?: number;
+}): Promise<MonitoringEventPage> {
+  const { data, error } = await supabase.rpc("admin_list_monitoring_events", {
+    p_level: input.level ?? null,
+    p_source: input.source ?? null,
+    p_page: input.page ?? 1,
+    p_page_size: input.pageSize ?? 50,
+  });
+  if (error) throw toAdminError(error, "Couldn't load monitoring events.");
+  return pageResult((data as MonitoringEventPage["items"]) ?? []);
+}
+
+export async function adminListReliabilityEvents(userId?: string | null): Promise<ReliabilityEventRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_reliability_events", {
+    p_user_id: userId ?? null,
+    p_page: 1,
+    p_page_size: 100,
+  });
+  if (error) throw toAdminError(error, "Couldn't load reliability events.");
+  return (data as ReliabilityEventRow[]) ?? [];
+}
+
 // ── Reports ─────────────────────────────────────────────────────────
 
 export async function adminListReports(input: {
@@ -514,6 +588,40 @@ export type AdminTeamRow = {
   display_name: string | null;
   role_name: AdminRole;
   created_at: string;
+};
+
+export type ModerationRuleRow = {
+  rule_name: string;
+  threshold: number | null;
+  action_type: string | null;
+  duration_hours: number | null;
+  severity: number;
+  enabled: boolean;
+  total_count: string;
+};
+
+export type MonitoringEventRow = {
+  id: string;
+  source: string;
+  level: string;
+  message: string;
+  details: unknown;
+  created_at: string;
+  total_count: string;
+};
+
+export type MonitoringEventPage = { items: MonitoringEventRow[]; totalCount: number };
+
+export type ReliabilityEventRow = {
+  id: string;
+  user_id: string;
+  user_name: string | null;
+  event_type: string;
+  weight: number;
+  reason: string | null;
+  ride_id: string | null;
+  created_at: string;
+  total_count: string;
 };
 
 export type AnalyticsDaily = { day: string; registrations: number };
