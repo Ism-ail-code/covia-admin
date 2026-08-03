@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/page";
+import { ErrorState } from "@/components/page";
 import { adminListVerifications } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/verifications")({
@@ -36,6 +37,10 @@ function VerificationsPage() {
   const query = useQuery({ queryKey: ["verifications", "list"], queryFn: () => adminListVerifications({}) });
 
   const rows = query.data ?? [];
+
+  if (query.isError) {
+    return <ErrorState message="Could not load the verification queue." onRetry={() => void query.refetch()} />;
+  }
 
   return (
     <div>

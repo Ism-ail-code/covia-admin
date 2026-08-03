@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/page";
+import { ErrorState } from "@/components/page";
 import { adminSearchRides } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/rides")({
@@ -39,6 +40,10 @@ function RidesPage() {
   const ridesQuery = useQuery({ queryKey: ["rides", "all"], queryFn: () => adminSearchRides({ page: 1, pageSize: 50 }) });
 
   const rows = ridesQuery.data?.items ?? [];
+
+  if (ridesQuery.isError) {
+    return <ErrorState message="Could not load rides." onRetry={() => void ridesQuery.refetch()} />;
+  }
 
   return (
     <div>

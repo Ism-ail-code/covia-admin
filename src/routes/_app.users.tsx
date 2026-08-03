@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/page";
+import { ErrorState } from "@/components/page";
 import { adminSearchUsers } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/users")({
@@ -40,6 +41,15 @@ function UsersPage() {
   const usersQuery = useQuery({ queryKey: ["users", "all"], queryFn: () => adminSearchUsers({ page: 1, pageSize: 50 }) });
 
   const rows = usersQuery.data?.items ?? [];
+
+  if (usersQuery.isError) {
+    return (
+      <ErrorState
+        message="Could not load users."
+        onRetry={() => void usersQuery.refetch()}
+      />
+    );
+  }
 
   return (
     <div>

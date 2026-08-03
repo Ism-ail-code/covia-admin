@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/page";
+import { ErrorState } from "@/components/page";
 import { adminDecideAppeal, adminListAppeals } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/appeals")({
@@ -48,6 +49,10 @@ function AppealsPage() {
   });
 
   const rows = appealsQuery.data?.items ?? [];
+
+  if (appealsQuery.isError) {
+    return <ErrorState message="Could not load appeals." onRetry={() => void appealsQuery.refetch()} />;
+  }
 
   return (
     <div>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/page";
+import { ErrorState } from "@/components/page";
 import { adminListModerationRules } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/safety")({
@@ -22,6 +23,10 @@ function SafetyPage() {
   const rulesQuery = useQuery({ queryKey: ["safetyRules"], queryFn: adminListModerationRules });
 
   const rows = rulesQuery.data ?? [];
+
+  if (rulesQuery.isError) {
+    return <ErrorState message="Could not load safety policies." onRetry={() => void rulesQuery.refetch()} />;
+  }
 
   return (
     <div>

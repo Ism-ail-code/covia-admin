@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/page";
+import { ErrorState } from "@/components/page";
 import { adminGetAnalytics } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/analytics")({
@@ -13,6 +14,10 @@ function AnalyticsPage() {
   const analyticsQuery = useQuery({ queryKey: ["analytics"], queryFn: adminGetAnalytics });
 
   const analytics = analyticsQuery.data;
+
+  if (analyticsQuery.isError) {
+    return <ErrorState message="Could not load analytics." onRetry={() => void analyticsQuery.refetch()} />;
+  }
 
   const activeRiders = analytics?.users.overview.active_users_30d ?? 0;
   const verified = analytics?.users.overview.verified_users ?? 0;

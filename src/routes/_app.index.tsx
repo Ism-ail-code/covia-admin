@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeader } from "@/components/page";
+import { PageHeader, ErrorState } from "@/components/page";
 import { adminGetAnalytics, adminListAppeals, adminListVerifications, adminSearchUsers } from "@/lib/adminApi";
 import { subscribeToRides } from "@/lib/realtime";
 import { cn } from "@/lib/utils";
@@ -89,6 +89,10 @@ function DashboardPage() {
   }, [queryClient]);
 
   const analytics = analyticsQuery.data;
+
+  if (analyticsQuery.isError) {
+    return <ErrorState message="Could not load dashboard data." onRetry={() => void analyticsQuery.refetch()} />;
+  }
 
   const registrations = analytics?.users.daily_registrations ?? [];
   const peak = Math.max(...registrations.map((d) => d.registrations), 1);

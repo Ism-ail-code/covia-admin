@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page";
+import { ErrorState } from "@/components/page";
 import { adminListAdminUsers } from "@/lib/adminApi";
 import { ROLE_PERMISSIONS } from "@/lib/rbac";
 
@@ -25,6 +26,10 @@ function TeamPage() {
   const adminsQuery = useQuery({ queryKey: ["admins"], queryFn: adminListAdminUsers });
 
   const rows = adminsQuery.data ?? [];
+
+  if (adminsQuery.isError) {
+    return <ErrorState message="Could not load the admin team." onRetry={() => void adminsQuery.refetch()} />;
+  }
 
   return (
     <div>

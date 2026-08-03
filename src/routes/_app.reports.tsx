@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/page";
+import { ErrorState } from "@/components/page";
 import { adminListReports, adminReviewReport } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/reports")({
@@ -38,12 +39,18 @@ function ReportsPage() {
     onError: (err) => toast.error(err instanceof Error ? err.message : "Could not update report"),
   });
 
+  const rows = reportsQuery.data?.items ?? [];
+
+  if (reportsQuery.isError) {
+    return <ErrorState message="Could not load reports." onRetry={() => void reportsQuery.refetch()} />;
+  }
+
   return (
     <div>
       <PageHeader title="Reports" description="Safety and trust incidents raised by users." />
 
       <div className="space-y-3">
-        {reportsQuery.data?.items.map((r) => (
+        {rows.map((r) => (
           <Card key={r.id}>
             <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
