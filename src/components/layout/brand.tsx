@@ -12,9 +12,6 @@ import {
 import { cn } from "@/lib/utils";
 import type { AuthUser } from "@/lib/auth";
 
-const WORKSPACE_NAME = "Covia";
-const WORKSPACE_TAG = "Coordination Platform";
-
 export function getInitials(name?: string): string {
   if (!name) return "C";
   return name
@@ -35,25 +32,6 @@ export function BrandMark({ className }: { className?: string }) {
     >
       <MapPinned className="size-4.5" />
     </span>
-  );
-}
-
-interface BrandProps {
-  className?: string;
-  compact?: boolean;
-}
-
-export function Brand({ className, compact }: BrandProps) {
-  return (
-    <div className={cn("flex items-center gap-2.5", className)}>
-      <BrandMark />
-      {!compact && (
-        <div className="leading-tight">
-          <p className="font-display text-sm font-semibold tracking-tight">{WORKSPACE_NAME}</p>
-          <p className="text-[11px] text-muted-foreground">{WORKSPACE_TAG}</p>
-        </div>
-      )}
-    </div>
   );
 }
 

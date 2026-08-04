@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader, ErrorState } from "@/components/page";
 import { DocumentPreview } from "@/components/verification/document-preview";
-import { adminListVerifications, adminReviewVerification } from "@/lib/adminApi";
+import { adminGetVerification, adminReviewVerification } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/_app/verifications/$verificationId")({
   beforeLoad: () => guardPermission("verification.view"),
@@ -43,9 +43,8 @@ function VerificationDetailPage() {
   const [dialog, setDialog] = useState<null | { action: "reject" | "resubmit" | "approve"; reason: string }>(null);
 
   const submissionQuery = useQuery({
-    queryKey: ["verifications", "all"],
-    queryFn: () => adminListVerifications({ status: "all" }),
-    select: (rows) => rows.find((v) => v.id === verificationId),
+    queryKey: ["verifications", verificationId],
+    queryFn: () => adminGetVerification(verificationId),
   });
 
   const reviewMutation = useMutation({
@@ -275,6 +274,7 @@ function VerificationDetailPage() {
               placeholder="Why is this being rejected / requested again?"
               value={dialog.reason}
               onChange={(e) => setDialog({ ...dialog, reason: e.target.value })}
+              maxLength={500}
               autoFocus
             />
           </div>

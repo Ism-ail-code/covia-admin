@@ -5,6 +5,7 @@ import { UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/page";
 import { ErrorState } from "@/components/page";
 import { adminListAdminUsers } from "@/lib/adminApi";
@@ -28,6 +29,24 @@ function TeamPage() {
   const adminsQuery = useQuery({ queryKey: ["admins"], queryFn: adminListAdminUsers });
 
   const rows = adminsQuery.data ?? [];
+
+  if (adminsQuery.isLoading) {
+    return (
+      <div>
+        <Skeleton className="mb-6 h-10 w-32" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-lg border bg-card p-4">
+              <Skeleton className="mb-3 h-10 w-10 rounded-full" />
+              <Skeleton className="mb-2 h-5 w-32" />
+              <Skeleton className="mb-2 h-4 w-40" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (adminsQuery.isError) {
     return <ErrorState message="Could not load the admin team." onRetry={() => void adminsQuery.refetch()} />;

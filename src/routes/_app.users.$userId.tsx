@@ -159,11 +159,12 @@ function UserDetailPage() {
                     <DialogTitle>Suspend account</DialogTitle>
                     <DialogDescription>Give a reason for the suspension (visible in the audit log).</DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-2">
+                   <div className="space-y-2">
                     <Input
                       placeholder="Reason…"
                       value={suspendReason}
                       onChange={(e) => setSuspendReason(e.target.value)}
+                      maxLength={500}
                       autoFocus
                     />
                   </div>
@@ -196,6 +197,7 @@ function UserDetailPage() {
                     placeholder="Reason…"
                     value={banReason}
                     onChange={(e) => setBanReason(e.target.value)}
+                    maxLength={500}
                     autoFocus
                   />
                 </div>

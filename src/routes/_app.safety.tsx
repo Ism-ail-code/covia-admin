@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/page";
 import { ErrorState } from "@/components/page";
@@ -25,6 +26,25 @@ function SafetyPage() {
   const rulesQuery = useQuery({ queryKey: ["safetyRules"], queryFn: adminListModerationRules });
 
   const rows = rulesQuery.data ?? [];
+
+  if (rulesQuery.isLoading) {
+    return (
+      <div>
+        <Skeleton className="mb-6 h-10 w-48" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-5">
+                <Skeleton className="mb-3 h-5 w-32" />
+                <Skeleton className="mb-2 h-4 w-24" />
+                <Skeleton className="h-8 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (rulesQuery.isError) {
     return <ErrorState message="Could not load safety policies." onRetry={() => void rulesQuery.refetch()} />;

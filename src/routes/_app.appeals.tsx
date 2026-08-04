@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -51,6 +52,34 @@ function AppealsPage() {
   });
 
   const rows = appealsQuery.data?.items ?? [];
+
+  if (appealsQuery.isLoading) {
+    return (
+      <div>
+        <Skeleton className="mb-6 h-10 w-32" />
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <TableHead key={i}><Skeleton className="h-4 w-16" /></TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    );
+  }
 
   if (appealsQuery.isError) {
     return <ErrorState message="Could not load appeals." onRetry={() => void appealsQuery.refetch()} />;

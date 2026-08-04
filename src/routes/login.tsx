@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Loader2, LogIn, MapPinned } from "lucide-react";
 import { toast } from "sonner";
@@ -23,16 +23,30 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const failedAttemptsRef = useRef(0);
+  const lastAttemptRef = useRef(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const now = Date.now();
+    const elapsed = now - lastAttemptRef.current;
+    const minDelay = Math.min(1000 * Math.pow(2, failedAttemptsRef.current), 60000);
+    if (elapsed < minDelay) {
+      toast.error(`Too many attempts. Wait ${Math.ceil((minDelay - elapsed) / 1000)} seconds.`);
+      return;
+    }
+
     setSubmitting(true);
+    lastAttemptRef.current = now;
     const { ok, error } = await signIn(email, password);
     setSubmitting(false);
     if (!ok) {
+      failedAttemptsRef.current += 1;
       toast.error(error ?? "Sign in failed");
       return;
     }
+    failedAttemptsRef.current = 0;
     toast.success("Welcome back");
     navigate({ to: "/" });
   };

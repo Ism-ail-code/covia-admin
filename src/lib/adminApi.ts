@@ -27,7 +27,19 @@ function toAdminError(error: unknown, fallback: string): AdminError {
     if (message.includes("28000")) {
       return new AdminError("You need to be logged in.");
     }
-    return new AdminError(message || fallback);
+    if (message.includes("23503")) {
+      return new AdminError("The requested record no longer exists.");
+    }
+    if (message.includes("23505")) {
+      return new AdminError("This action conflicts with existing data.");
+    }
+    if (message.includes("23514")) {
+      return new AdminError("The provided data does not meet requirements.");
+    }
+    if (message.includes("PGRST") || message.includes("schema")) {
+      return new AdminError(fallback);
+    }
+    return new AdminError(fallback);
   }
   return new AdminError(fallback);
 }
@@ -173,6 +185,14 @@ export async function adminListVerifications(input: {
   });
   if (error) throw toAdminError(error, "Couldn't load the verification queue.");
   return (data as VerificationQueueRow[]) ?? [];
+}
+
+export async function adminGetVerification(id: string): Promise<VerificationQueueRow | null> {
+  const { data, error } = await supabase.rpc("admin_get_verification", {
+    p_id: id,
+  });
+  if (error) throw toAdminError(error, "Couldn't load the verification.");
+  return (data as VerificationQueueRow | null) ?? null;
 }
 
 export async function adminReviewVerification(

@@ -3,8 +3,12 @@ import { Radar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageHeader } from "@/components/page";
+import { guardPermission } from "@/lib/route-guards";
 
 export const Route = createFileRoute("/_app/standby")({
+  beforeLoad: async () => {
+    await guardPermission("config.view");
+  },
   component: StandbyPage,
 });
 
