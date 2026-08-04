@@ -53,7 +53,8 @@ function statusBadge(isBanned: boolean, isSuspended: boolean): { variant: "succe
 function UserDetailPage() {
   const { userId } = Route.useParams();
   const queryClient = useQueryClient();
-  const [reason, setReason] = useState("");
+  const [suspendReason, setSuspendReason] = useState("");
+  const [banReason, setBanReason] = useState("");
 
   const profileQuery = useQuery({
     queryKey: ["user", userId],
@@ -101,13 +102,22 @@ function UserDetailPage() {
   const isRestricted = u.is_banned || u.is_suspended;
   const status = statusBadge(u.is_banned, u.is_suspended);
 
-  const runWithReason = (fn: (reason: string) => Promise<void>, verb: string, checkReason = true) => {
-    if (checkReason && !reason.trim()) {
+  const runSuspend = () => {
+    if (!suspendReason.trim()) {
       toast.error("A reason is required");
       return;
     }
-    mutation.mutate({ fn: () => fn(reason.trim()), verb });
-    setReason("");
+    mutation.mutate({ fn: () => adminSuspendUser(u.user_id, suspendReason.trim()), verb: "User suspended" });
+    setSuspendReason("");
+  };
+
+  const runBan = () => {
+    if (!banReason.trim()) {
+      toast.error("A reason is required");
+      return;
+    }
+    mutation.mutate({ fn: () => adminBanUser(u.user_id, banReason.trim()), verb: "User banned" });
+    setBanReason("");
   };
 
   return (
@@ -129,7 +139,9 @@ function UserDetailPage() {
                 variant="outline"
                 size="sm"
                 disabled={mutation.isPending}
-                onClick={() => runWithReason((reason) => adminReactivateUser(u.user_id, reason), "Account reactivated")}
+                onClick={() => {
+                  mutation.mutate({ fn: () => adminReactivateUser(u.user_id, "Account reactivated"), verb: "Account reactivated" });
+                }}
               >
                 {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
                 Reactivate
@@ -150,8 +162,8 @@ function UserDetailPage() {
                   <div className="space-y-2">
                     <Input
                       placeholder="Reason…"
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
+                      value={suspendReason}
+                      onChange={(e) => setSuspendReason(e.target.value)}
                       autoFocus
                     />
                   </div>
@@ -159,7 +171,7 @@ function UserDetailPage() {
                     <Button
                       size="sm"
                       disabled={mutation.isPending}
-                      onClick={() => runWithReason((reason) => adminSuspendUser(u.user_id, reason), "User suspended")}
+                      onClick={runSuspend}
                     >
                       Confirm suspension
                     </Button>
@@ -182,8 +194,8 @@ function UserDetailPage() {
                 <div className="space-y-2">
                   <Input
                     placeholder="Reason…"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
+                    value={banReason}
+                    onChange={(e) => setBanReason(e.target.value)}
                     autoFocus
                   />
                 </div>
@@ -192,7 +204,7 @@ function UserDetailPage() {
                     variant="destructive"
                     size="sm"
                     disabled={mutation.isPending}
-                    onClick={() => runWithReason((r) => adminBanUser(u.user_id, r), "User banned")}
+                    onClick={runBan}
                   >
                     {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Ban account"}
                   </Button>

@@ -122,7 +122,7 @@ export async function ensureSession(): Promise<void> {
           setUser(null);
           return;
         }
-        void currentAdminUser().then(setUser);
+        void currentAdminUser().then(setUser).catch(() => setUser(null));
       });
     })();
   }

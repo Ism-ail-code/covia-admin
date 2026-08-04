@@ -635,7 +635,7 @@ export type MonitoringEventRow = {
 export type MonitoringEventPage = { items: MonitoringEventRow[]; totalCount: number };
 
 export type SafetyConfigRow = {
-  id: boolean;
+  id: string;
   route_deviation_meters: number;
   stop_threshold_seconds: number;
   safety_check_timeout_seconds: number;

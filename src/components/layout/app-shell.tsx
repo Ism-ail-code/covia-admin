@@ -45,10 +45,10 @@ const NAVIGATION: NavSection[] = [
     label: "Operations",
     items: [
       { title: "Users", to: "/users", icon: Users },
-      { title: "Verifications", to: "/verifications", icon: FileCheck, badge: 3 },
+      { title: "Verifications", to: "/verifications", icon: FileCheck },
       { title: "Rides", to: "/rides", icon: Gauge },
-      { title: "Reports", to: "/reports", icon: Scale, badge: 2 },
-      { title: "Appeals", to: "/appeals", icon: Headset, badge: 1 },
+      { title: "Reports", to: "/reports", icon: Scale },
+      { title: "Appeals", to: "/appeals", icon: Headset },
     ],
   },
   {
@@ -64,7 +64,7 @@ const NAVIGATION: NavSection[] = [
     items: [
       { title: "Analytics", to: "/analytics", icon: BarChart3 },
       { title: "Team", to: "/team", icon: UserCog },
-      { title: "Support Tickets", to: "/tickets", icon: TicketCheck, badge: 2 },
+      { title: "Support Tickets", to: "/tickets", icon: TicketCheck },
       { title: "Settings", to: "/settings", icon: Settings },
     ],
   },
