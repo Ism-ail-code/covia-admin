@@ -17,7 +17,7 @@ import {
   UserCog,
   Users,
   Zap,
-  ClipboardDashboard,
+  ClipboardList,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,7 @@ const NAVIGATION: NavSection[] = [
   {
     label: "Growth & Admin",
     items: [
-      { title: "Beta Dashboard", to: "/beta", icon: ClipboardDashboard },
+      { title: "Beta Dashboard", to: "/beta", icon: ClipboardList },
       { title: "Analytics", to: "/analytics", icon: BarChart3 },
       { title: "Team", to: "/team", icon: UserCog },
       { title: "Support Tickets", to: "/tickets", icon: TicketCheck },

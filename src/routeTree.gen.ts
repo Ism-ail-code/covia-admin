@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
 import { Route as AppAppealsRouteImport } from './routes/_app.appeals'
+import { Route as AppBetaRouteImport } from './routes/_app.beta'
 import { Route as AppMonitoringRouteImport } from './routes/_app.monitoring'
 import { Route as AppReportsRouteImport } from './routes/_app.reports'
 import { Route as AppRidesRouteImport } from './routes/_app.rides'
@@ -55,6 +56,11 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
 const AppAppealsRoute = AppAppealsRouteImport.update({
   id: '/appeals',
   path: '/appeals',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBetaRoute = AppBetaRouteImport.update({
+  id: '/beta',
+  path: '/beta',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMonitoringRoute = AppMonitoringRouteImport.update({
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/analytics': typeof AppAnalyticsRoute
   '/appeals': typeof AppAppealsRoute
+  '/beta': typeof AppBetaRoute
   '/monitoring': typeof AppMonitoringRoute
   '/reports': typeof AppReportsRoute
   '/rides': typeof AppRidesRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/analytics': typeof AppAnalyticsRoute
   '/appeals': typeof AppAppealsRoute
+  '/beta': typeof AppBetaRoute
   '/monitoring': typeof AppMonitoringRoute
   '/reports': typeof AppReportsRoute
   '/rides': typeof AppRidesRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/appeals': typeof AppAppealsRoute
+  '/_app/beta': typeof AppBetaRoute
   '/_app/monitoring': typeof AppMonitoringRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/rides': typeof AppRidesRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/analytics'
     | '/appeals'
+    | '/beta'
     | '/monitoring'
     | '/reports'
     | '/rides'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/analytics'
     | '/appeals'
+    | '/beta'
     | '/monitoring'
     | '/reports'
     | '/rides'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/analytics'
     | '/_app/appeals'
+    | '/_app/beta'
     | '/_app/monitoring'
     | '/_app/reports'
     | '/_app/rides'
@@ -287,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/appeals'
       fullPath: '/appeals'
       preLoaderRoute: typeof AppAppealsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/beta': {
+      id: '/_app/beta'
+      path: '/beta'
+      fullPath: '/beta'
+      preLoaderRoute: typeof AppBetaRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/monitoring': {
@@ -402,6 +421,7 @@ const AppVerificationsRouteWithChildren =
 interface AppRouteChildren {
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAppealsRoute: typeof AppAppealsRoute
+  AppBetaRoute: typeof AppBetaRoute
   AppMonitoringRoute: typeof AppMonitoringRoute
   AppReportsRoute: typeof AppReportsRoute
   AppRidesRoute: typeof AppRidesRoute
@@ -418,6 +438,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppAppealsRoute: AppAppealsRoute,
+  AppBetaRoute: AppBetaRoute,
   AppMonitoringRoute: AppMonitoringRoute,
   AppReportsRoute: AppReportsRoute,
   AppRidesRoute: AppRidesRoute,
